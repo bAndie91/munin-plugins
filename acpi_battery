@@ -1,0 +1,48 @@
+#!/bin/bash
+
+
+get_data() {
+	acpi -b | \
+	while read type num rest; do
+
+		percent=`echo "$rest" | grep -Eo '[0-9]+%'`
+		if [ -n "$percent" ]; then
+			num=${num//[!0-9]/}
+			record="${type/[!a-zA-Z0-9_-]/}_$num"
+			if [ "$1" = config ]; then
+				echo "$record.label $type $num"
+				echo "$record.colour FF0000"
+				echo "$record.critical 5:100"
+				echo "$record.warning 20:100"
+			else
+				percent=${percent:0:$[ ${#percent} - 1 ]}
+				echo "$record.value $percent"
+			fi
+		fi
+	done
+}
+
+
+case "$1" in
+autoconfig)
+	false
+	;;
+suggest)
+	false
+	;;
+config)
+	echo "graph_title Battery
+graph_vlabel %
+graph_args -u 100 -l 0
+graph_scale no
+graph_category sensors"
+	get_data "$1"
+	;;
+fetch|"")
+	get_data "$1"
+	;;
+*)
+	false
+	;;
+esac
+

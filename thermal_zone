@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+#
+# Invocation: thermal_zone
+#
+
+$0=~s/^.*?([^\/]+)$/$1/;
+# $device = ($0=~/_([[:alnum:]]+)$/)[0];
+
+
+if($ARGV[0] eq "config") {
+    print "graph_title System Temperature
+graph_vlabel grad-C
+graph_scale yes
+graph_args --base 1000 --units-exponent 0
+graph_category sensors\n";
+}
+
+for $temp (glob "/sys/class/thermal/thermal_zone*") {
+	$tz = ($temp =~ /([^\/]+)$/)[0];
+	$temp .= "/temp";
+	open _, $temp or next;
+	$celsius = <_>;
+	$celsius = sprintf "%4.1f", $celsius/1000;
+	close _;
+	if($ARGV[0] eq "config") {
+	    print "$tz.label $tz\n";
+	}
+	else {
+	    print "$tz.value $celsius\n";
+	}
+}
+
